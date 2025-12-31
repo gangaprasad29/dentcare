@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import UserSync from "@/components/userSync";
+import TanStackProvider from "@/components/providers/TanStackProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
+    <TanStackProvider>
+        <ClerkProvider
     appearance={{
           variables: {
             colorPrimary: "#e78a53",
@@ -45,6 +47,7 @@ export default function RootLayout({
       </body>
     </html>
     </ClerkProvider>
+    </TanStackProvider>
     
   );
 }
