@@ -6,14 +6,11 @@ import * as ResizablePrimitive from "react-resizable-panels"
 import { cn } from "@/lib/utils"
 
 // Helper types so TypeScript does not error on older versions
-type PanelGroupComponent =
-  typeof (ResizablePrimitive as any).PanelGroup
+// `any` fallback types for maximum compatibility across library versions
+type PanelGroupComponent = any
+type PanelComponent = any
+type HandleComponent = any
 
-type PanelComponent =
-  typeof (ResizablePrimitive as any).Panel
-
-type HandleComponent =
-  typeof (ResizablePrimitive as any).PanelResizeHandle
 
 function ResizablePanelGroup({
   className,
