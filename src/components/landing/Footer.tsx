@@ -9,12 +9,12 @@ function Footer() {
             <div className="flex items-center gap-2">
               <Image
                 src="/logo.png"
-                alt="DentWise Logo"
+                alt="DentCare Logo"
                 width={32}
                 height={32}
                 className="w-8 h-8"
               />
-              <span className="font-semibold text-lg">DentWise</span>
+              <span className="font-semibold text-lg">DentCare</span>
             </div>
             <p className="text-sm text-muted-foreground">
               AI-powered dental assistance that actually helps.
