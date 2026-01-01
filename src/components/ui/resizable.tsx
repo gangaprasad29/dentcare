@@ -2,18 +2,24 @@
 
 import * as React from "react"
 import { GripVerticalIcon } from "lucide-react"
-import {
-  PanelGroup,
-  Panel,
-  PanelResizeHandle,
-} from "react-resizable-panels"
-
+import * as ResizablePrimitive from "react-resizable-panels"
 import { cn } from "@/lib/utils"
+
+// Helper types so TypeScript does not error on older versions
+type PanelGroupComponent =
+  typeof (ResizablePrimitive as any).PanelGroup
+
+type PanelComponent =
+  typeof (ResizablePrimitive as any).Panel
+
+type HandleComponent =
+  typeof (ResizablePrimitive as any).PanelResizeHandle
 
 function ResizablePanelGroup({
   className,
   ...props
-}: React.ComponentProps<typeof PanelGroup>) {
+}: React.ComponentProps<PanelGroupComponent>) {
+  const PanelGroup = (ResizablePrimitive as any).PanelGroup
   return (
     <PanelGroup
       data-slot="resizable-panel-group"
@@ -26,9 +32,8 @@ function ResizablePanelGroup({
   )
 }
 
-function ResizablePanel({
-  ...props
-}: React.ComponentProps<typeof Panel>) {
+function ResizablePanel(props: React.ComponentProps<PanelComponent>) {
+  const Panel = (ResizablePrimitive as any).Panel
   return <Panel data-slot="resizable-panel" {...props} />
 }
 
@@ -36,9 +41,11 @@ function ResizableHandle({
   withHandle,
   className,
   ...props
-}: React.ComponentProps<typeof PanelResizeHandle> & {
+}: React.ComponentProps<HandleComponent> & {
   withHandle?: boolean
 }) {
+  const PanelResizeHandle = (ResizablePrimitive as any).PanelResizeHandle
+
   return (
     <PanelResizeHandle
       data-slot="resizable-handle"
