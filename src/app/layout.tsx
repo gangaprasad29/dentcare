@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClerkProvider } from "@clerk/nextjs";
 import UserSync from "@/components/userSync";
 import TanStackProvider from "@/components/providers/TanStackProvider";
 import { Toaster } from "sonner";
@@ -17,8 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DentCare - AI Powered Dental Assistant",
-  description: "Get instant dental advice through voice calls with out AI assistant. Avalilable 24/7",
+  title: "DentWise - AI Powered Dental Assistant",
+  description:
+    "Get instant dental advice through voice calls with our AI assistant. Avaiable 24/7.",
 };
 
 export default function RootLayout({
@@ -28,8 +29,8 @@ export default function RootLayout({
 }>) {
   return (
     <TanStackProvider>
-        <ClerkProvider
-    appearance={{
+      <ClerkProvider
+        appearance={{
           variables: {
             colorPrimary: "#e78a53",
             colorBackground: "#f3f4f6",
@@ -38,18 +39,16 @@ export default function RootLayout({
             colorInputBackground: "#f3f4f6",
           },
         }}
-        >
-      <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
       >
-        <UserSync />
-        <Toaster />
-        {children}
-      </body>
-    </html>
-    </ClerkProvider>
+        <html lang="en">
+          <body className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}>
+            {/* this is done in the home page component */}
+            {/* <UserSync /> */}
+            <Toaster />
+            {children}
+          </body>
+        </html>
+      </ClerkProvider>
     </TanStackProvider>
-    
   );
 }
