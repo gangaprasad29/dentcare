@@ -23,19 +23,20 @@ export async function POST(request: Request) {
 
     // send the email
     // do not use this in prod, only for testing purposes
-    const { data, error } = await resend.emails.send({
-      from: "DentCare <no-reply@resend.dev>",
-      to: [userEmail],
-      subject: "Appointment Confirmation - DentCare",
-      react: AppointmentConfirmationEmail({
-        doctorName,
-        appointmentDate,
-        appointmentTime,
-        appointmentType,
-        duration,
-        price,
-      }),
-    });
+   const { data, error } = await resend.emails.send({
+  from: "DentCare <onboarding@resend.dev>", // MUST be this
+  to: [userEmail], // gmail is OK here
+  subject: "Appointment Confirmation - DentCare",
+  react: AppointmentConfirmationEmail({
+    doctorName,
+    appointmentDate,
+    appointmentTime,
+    appointmentType,
+    duration,
+    price,
+  }),
+});
+
 
     if (error) {
       console.error("Resend error:", error);
