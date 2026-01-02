@@ -52,8 +52,7 @@ const { data, error } = await resend.emails.send({
 console.log("RESEND RESPONSE:", data);
 console.log("RESEND ERROR:", error);
 
-
-   if (error) {
+if (error) {
   console.error("Resend error:", error);
 
   const message =
@@ -62,10 +61,14 @@ console.log("RESEND ERROR:", error);
       : "Resend failed";
 
   return NextResponse.json(
-    { error: message, from: fromEmail },
+    {
+      error: message,
+      from: fromEmail,
+    },
     { status: 500 }
   );
 }
+
 
 
 
