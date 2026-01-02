@@ -34,3 +34,25 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+---
+
+## Email configuration
+
+This project supports sending appointment confirmation emails using Resend (recommended) or an SMTP fallback (useful if you don't have a verified sending domain yet).
+
+Resend (recommended):
+- Set `RESEND_API_KEY` to your production Resend API key.
+- Optionally set `RESEND_FROM` to an email on a domain you've verified in Resend (e.g., `no-reply@yourdomain.com`).
+- Verify your domain at https://resend.com/domains for full production sending and best deliverability.
+
+SMTP fallback (short-term):
+- Set the following environment variables if you want to send via SMTP:
+  - `SMTP_HOST` (e.g., `smtp.gmail.com`)
+  - `SMTP_PORT` (usually `465` for SSL)
+  - `SMTP_USER` (SMTP account username / email)
+  - `SMTP_PASS` (SMTP password or app-specific password)
+  - `SMTP_FROM` (sender email address to use)
+- When `RESEND_API_KEY` is missing or Resend blocks delivery, the server will attempt to send via SMTP when these variables are present.
+
+Security note: keep secrets like `RESEND_API_KEY` and `SMTP_PASS` out of source control and store them securely in your deployment provider (Render, Vercel, etc.).
