@@ -56,15 +56,18 @@ console.log("RESEND ERROR:", error);
    if (error) {
   console.error("Resend error:", error);
 
+  const message =
+    typeof error === "object" && error !== null && "message" in error
+      ? (error as any).message
+      : "Resend failed";
+
   return NextResponse.json(
-    {
-      error: error?.message || "Resend failed",
-      info: error,
-      from: fromEmail,
-    },
-    { status: error?.statusCode || 500 }
+    { error: message, from: fromEmail },
+    { status: 500 }
   );
 }
+
+
 
 
     return NextResponse.json(
