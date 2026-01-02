@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+import { render } from "@react-email/render";
 import AppointmentConfirmationEmail from "@/components/emails/AppointmentConfirmationEmail";
 
 export async function POST(request: Request) {
@@ -26,15 +25,15 @@ export async function POST(request: Request) {
     }
 
     // Render React email → HTML
-    const html = renderToStaticMarkup(
-      React.createElement(AppointmentConfirmationEmail, {
-        doctorName,
-        appointmentDate,
-        appointmentTime,
-        appointmentType,
-        duration,
-        price,
-      })
+    const html = await render(
+      <AppointmentConfirmationEmail
+        doctorName={doctorName}
+        appointmentDate={appointmentDate}
+        appointmentTime={appointmentTime}
+        appointmentType={appointmentType}
+        duration={duration}
+        price={price}
+      />
     );
 
     // Gmail SMTP transport
