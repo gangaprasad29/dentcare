@@ -61,6 +61,12 @@ export async function POST(request: Request) {
       </html>
     `;
 
+    // Debug: Check environment variables
+    console.log("Environment check:", {
+      hasApiKey: !!process.env.RESEND_API_KEY,
+      apiKeyLength: process.env.RESEND_API_KEY?.length
+    });
+
     // send the email using Resend
     const { data, error } = await resend.emails.send({
       from: "DentWise <no-reply@resend.dev>",
