@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
@@ -59,28 +61,32 @@ export async function POST(request: Request) {
       </html>
     `;
 
-    // SendGrid SMTP transport
-    const transporter = nodemailer.createTransport({
-      host: "smtp.sendgrid.net",
-      port: 587,
-      secure: false,
-      auth: {
-        user: "apikey",
-        pass: process.env.SENDGRID_API_KEY,
-      },
+    // Debug:Check environment variables
+    console.log("Environment check:", {
+      hasApiKey: !!process.env.RESEND_API_KEY,
+      apiKeyLength: process.env.RESEND_API_KEY?.length
     });
 
-    const info = await transporter.sendMail({
-      from: "DentCare <noreply@dentcare.com>",
-      to: userEmail,
+    // send the email using Resend
+    const { data, error } = await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: [userEmail],
       subject: "Appointment Confirmation - DentCare",
       html: html,
     });
 
-    console.log("SendGrid SEND OK:", info.messageId);
+    if (error) {
+      console.error("Resend error:", error);
+      console.error("Failed to send to:", userEmail);
+      return NextResponse.json({ 
+        error: "Failed to send email", 
+        details: error.message,
+        recipient: userEmail 
+      }, { status: 500 });
+    }
 
     return NextResponse.json(
-      { message: "Email sent successfully", emailId: info.messageId },
+      { message: "Email sent successfully", emailId: data?.id },
       { status: 200 }
     );
   } catch (error) {
