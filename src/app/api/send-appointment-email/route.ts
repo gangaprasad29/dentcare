@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       </html>
     `;
 
-    // Debug: Check environment variables
+    // Debug:Check environment variables
     console.log("Environment check:", {
       hasApiKey: !!process.env.RESEND_API_KEY,
       apiKeyLength: process.env.RESEND_API_KEY?.length
