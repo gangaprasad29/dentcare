@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
     // send the email using Resend
     const { data, error } = await resend.emails.send({
-      from: "DentWise <no-reply@resend.dev>",
+      from: "onboarding@resend.dev",
       to: [userEmail],
       subject: "Appointment Confirmation - DentWise",
       html: html,
