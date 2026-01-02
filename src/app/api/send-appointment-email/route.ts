@@ -32,10 +32,10 @@ export async function POST(request: Request) {
     }
 
     const fromEmail =
-      process.env.EMAIL_FROM || "DentCare <onboarding@resend.dev>";
+  process.env.EMAIL_FROM || "DentCare <onboarding@resend.dev>";
 
-    const { data, error } = await resend.emails.send({
-  from: process.env.EMAIL_FROM || "DentCare <onboarding@resend.dev>",
+const { data, error } = await resend.emails.send({
+  from: fromEmail,
   to: [userEmail],
   subject: "Appointment Confirmation - DentCare",
   react: AppointmentConfirmationEmail({
@@ -47,6 +47,7 @@ export async function POST(request: Request) {
     price,
   }),
 });
+
 
 console.log("RESEND RESPONSE:", data);
 console.log("RESEND ERROR:", error);
