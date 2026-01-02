@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
-import nodemailer from "nodemailer";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import resend from "@/lib/resend";
 
 export async function POST(request: Request) {
+  // quick guard to help debugging in staging/dev
+  if (!process.env.RESEND_API_KEY) {
+    console.error("Missing RESEND_API_KEY");
+    return NextResponse.json({ error: "Email provider not configured (RESEND_API_KEY missing)" }, { status: 500 });
+  }
+
   try {
     const body = await request.json();
 
@@ -22,6 +25,8 @@ export async function POST(request: Request) {
     if (!userEmail || !doctorName || !appointmentDate || !appointmentTime) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+
+    const fromEmail = process.env.RESEND_FROM || "onboarding@resend.dev";
 
     // Simple HTML email template
     const html = `
@@ -62,34 +67,37 @@ export async function POST(request: Request) {
       </html>
     `;
 
-    // Debug:Check environment variables
-    console.log("Environment check:", {
-      hasApiKey: !!process.env.RESEND_API_KEY,
-      apiKeyLength: process.env.RESEND_API_KEY?.length
-    });
+    // Log useful debug info when investigating delivery issues
+    console.log("Attempting to send appointment email", { to: userEmail, from: fromEmail });
 
-    // send the email using Resend
-    const { data, error } = await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: [userEmail],
-      subject: "Appointment Confirmation - DentCare",
-      html: html,
-    });
+    try {
+      const sendResponse = await resend.emails.send({
+        from: fromEmail,
+        to: userEmail,
+        subject: "Appointment Confirmation - DentCare",
+        html,
+      });
 
-    if (error) {
-      console.error("Resend error:", error);
-      console.error("Failed to send to:", userEmail);
-      return NextResponse.json({ 
-        error: "Failed to send email", 
-        details: error.message,
-        recipient: userEmail 
-      }, { status: 500 });
+      console.log("Resend send response:", sendResponse);
+
+      return NextResponse.json(
+        { message: "Email sent successfully", emailId: sendResponse?.data?.id || undefined, recipient: userEmail },
+        { status: 200 }
+      );
+    } catch (err: any) {
+      // Resend SDK throws on HTTP errors — capture full details for debugging
+      console.error("Resend send failed:", {
+        message: err?.message,
+        code: err?.code,
+        response: err?.response?.data || err?.response || err,
+        recipient: userEmail,
+      });
+
+      // Helpful hint for common misconfiguration (test API keys / verified recipients)
+      const hint = "If you're using a test API key or haven't verified your sending domain/sender in Resend, recipient delivery may be restricted. Check your Resend dashboard and ensure you have a production API key and verified sender.";
+
+      return NextResponse.json({ error: "Failed to send email", details: err?.message || err, recipient: userEmail, hint }, { status: 500 });
     }
-
-    return NextResponse.json(
-      { message: "Email sent successfully", emailId: data?.id },
-      { status: 200 }
-    );
   } catch (error) {
     console.error("Email sending error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
