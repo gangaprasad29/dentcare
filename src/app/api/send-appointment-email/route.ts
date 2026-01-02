@@ -4,13 +4,21 @@ import { smtpConfigured, sendViaSmtp } from "@/lib/smtp";
 
 export async function POST(request: Request) {
   // Which providers are available — allow SMTP fallback when Resend is not configured or blocks delivery
-  const resendEnabled = !!process.env.RESEND_API_KEY;
-  const smtpEnabled = smtpConfigured();
+  let useResend = !!process.env.RESEND_API_KEY;
+  let useSmtp = smtpConfigured();
+  const emailProvider = (process.env.EMAIL_PROVIDER || "auto").toLowerCase();
+
+  // Allow forcing the provider ("auto" | "smtp" | "resend") via env var on Render
+  if (emailProvider === "smtp") {
+    useResend = false;
+  } else if (emailProvider === "resend") {
+    useSmtp = false;
+  }
 
   // default from: prefer RESEND_FROM, otherwise SMTP_FROM, otherwise a safe default
   const fromEmail = process.env.RESEND_FROM || process.env.SMTP_FROM || "onboarding@resend.dev";
 
-  console.log("Email providers status", { resendEnabled, smtpEnabled, from: fromEmail });
+  console.log("Email providers status", { useResend, useSmtp, emailProvider, from: fromEmail });
 
   try {
     const body = await request.json();
@@ -72,10 +80,10 @@ export async function POST(request: Request) {
     `;
 
     // Log useful debug info when investigating delivery issues
-    console.log("Attempting to send appointment email", { to: userEmail, from: fromEmail, providers: { resend: resendEnabled, smtp: smtpEnabled } });
+    console.log("Attempting to send appointment email", { to: userEmail, from: fromEmail, providers: { resend: useResend, smtp: useSmtp } });
 
     // If Resend is available, try it first; otherwise fall back to SMTP if configured
-    if (resendEnabled) {
+    if (useResend) {
       try {
         const sendResponse = await resend.emails.send({
           from: fromEmail,
@@ -106,7 +114,7 @@ export async function POST(request: Request) {
           const validationMessage = responseData?.message || "Validation error from Resend";
           console.error("Resend validation error", { validationMessage, responseData, recipient: userEmail });
 
-          if (smtpEnabled) {
+          if (useSmtp) {
             try {
               const smtpInfo = await sendViaSmtp({ from: fromEmail, to: userEmail, subject: "Appointment Confirmation - DentCare", html });
               console.log("SMTP fallback success:", smtpInfo);
@@ -124,7 +132,7 @@ export async function POST(request: Request) {
         }
 
         // For other resend errors, attempt SMTP fallback if configured
-        if (smtpEnabled) {
+        if (useSmtp) {
           try {
             const smtpInfo = await sendViaSmtp({ from: fromEmail, to: userEmail, subject: "Appointment Confirmation - DentCare", html });
             console.log("SMTP fallback success after resend error:", smtpInfo);
@@ -139,7 +147,7 @@ export async function POST(request: Request) {
         const hint = "If you're using a test API key or haven't verified your sending domain/sender in Resend, recipient delivery may be restricted. Check your Resend dashboard and ensure you have a production API key and verified sender.";
         return NextResponse.json({ error: "Failed to send email", details: err?.message || err, recipient: userEmail, hint }, { status: 500 });
       }
-    } else if (smtpEnabled) {
+    } else if (useSmtp) {
       // Resend not configured — use SMTP directly
       try {
         const smtpInfo = await sendViaSmtp({ from: fromEmail, to: userEmail, subject: "Appointment Confirmation - DentCare", html });
