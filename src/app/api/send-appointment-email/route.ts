@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+
     const {
       userEmail,
       doctorName,
@@ -14,34 +17,32 @@ export async function POST(request: Request) {
       price,
     } = body;
 
-    if (!userEmail) {
-      return NextResponse.json(
-        { error: "Recipient email missing" },
-        { status: 400 }
-      );
+    // validate required fields
+    if (!userEmail || !doctorName || !appointmentDate || !appointmentTime) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // HTML email template with appointment details
+    // Simple HTML email template
     const html = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Appointment Confirmation - DentCare</title>
+          <title>Appointment Confirmation - DentWise</title>
         </head>
         <body style="font-family: Arial, Helvetica, sans-serif; background-color: #ffffff; margin: 0; padding: 24px;">
           <div style="max-width: 560px; margin: 0 auto;">
             <h1 style="color: #111827; font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 16px;">
-              DentCare Appointment Confirmation
+              DentWise Appointment Confirmation
             </h1>
             <p style="color: #374151; font-size: 15px; line-height: 24px; margin: 10px 0;">
               Your appointment has been successfully scheduled. Here are the details:
             </p>
             <div style="background-color: #f3f4f6; border-radius: 8px; padding: 16px; margin: 12px 0;">
-              <p><strong>Doctor:</strong> ${doctorName || 'Dr. Smith'}</p>
+              <p><strong>Doctor:</strong> ${doctorName}</p>
               <p><strong>Appointment Type:</strong> ${appointmentType || 'General Checkup'}</p>
-              <p><strong>Date:</strong> ${appointmentDate || 'TBD'}</p>
-              <p><strong>Time:</strong> ${appointmentTime || 'TBD'}</p>
+              <p><strong>Date:</strong> ${appointmentDate}</p>
+              <p><strong>Time:</strong> ${appointmentTime}</p>
               <p><strong>Duration:</strong> ${duration || '30 minutes'}</p>
               <p><strong>Consultation Fee:</strong> ${price || '$50'}</p>
             </div>
@@ -49,13 +50,8 @@ export async function POST(request: Request) {
               Please arrive 10–15 minutes before your appointment time.
               If you need to reschedule, you may reply directly to this email.
             </p>
-            <div style="text-align: center; margin: 20px 0;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || '#'}" style="background-color: #2563eb; color: #ffffff; padding: 12px 22px; border-radius: 6px; text-decoration: none; font-size: 15px; font-weight: 600; display: inline-block;">
-                View My Appointment
-              </a>
-            </div>
             <p style="color: #6b7280; font-size: 13px; margin-top: 28px; text-align: center;">
-              DentCare Support<br />
+              DentWise Support<br />
               For appointment-related queries, contact:<br />
               <strong>gangaprasadurekar0@gmail.com</strong><br />
               (you may reply directly to this email)
@@ -65,34 +61,25 @@ export async function POST(request: Request) {
       </html>
     `;
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: true,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
+    // send the email using Resend
+    const { data, error } = await resend.emails.send({
+      from: "DentWise <no-reply@resend.dev>",
+      to: [userEmail],
+      subject: "Appointment Confirmation - DentWise",
+      html: html,
     });
 
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM,
-      to: userEmail,
-      subject: "Appointment Confirmation - DentCare",
-      html,
-    });
-
-    console.log("SMTP SEND OK:", info.messageId);
+    if (error) {
+      console.error("Resend error:", error);
+      return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+    }
 
     return NextResponse.json(
-      { message: "Email sent successfully" },
+      { message: "Email sent successfully", emailId: data?.id },
       { status: 200 }
     );
-  } catch (err) {
-    console.error("SMTP ERROR:", err);
-    return NextResponse.json(
-      { error: "Failed to send email" },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("Email sending error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
