@@ -55,6 +55,4 @@ SMTP fallback (short-term):
   - `SMTP_FROM` (sender email address to use)
 - When `RESEND_API_KEY` is missing or Resend blocks delivery, the server will attempt to send via SMTP when these variables are present.
 
-- **Force SMTP:** if you want to force using SMTP even when `RESEND_API_KEY` exists (useful for testing), set `EMAIL_PROVIDER=smtp` in your environment variables on Render. The available values are `auto` (default), `smtp`, or `resend`.
-
 Security note: keep secrets like `RESEND_API_KEY` and `SMTP_PASS` out of source control and store them securely in your deployment provider (Render, Vercel, etc.).
