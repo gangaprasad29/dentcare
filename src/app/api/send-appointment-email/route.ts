@@ -28,12 +28,12 @@ export async function POST(request: Request) {
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Appointment Confirmation - DentWise</title>
+          <title>Appointment Confirmation - DentCare</title>
         </head>
         <body style="font-family: Arial, Helvetica, sans-serif; background-color: #ffffff; margin: 0; padding: 24px;">
           <div style="max-width: 560px; margin: 0 auto;">
             <h1 style="color: #111827; font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 16px;">
-              DentWise Appointment Confirmation
+              DentCare Appointment Confirmation
             </h1>
             <p style="color: #374151; font-size: 15px; line-height: 24px; margin: 10px 0;">
               Your appointment has been successfully scheduled. Here are the details:
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
               If you need to reschedule, you may reply directly to this email.
             </p>
             <p style="color: #6b7280; font-size: 13px; margin-top: 28px; text-align: center;">
-              DentWise Support<br />
+              DentCare Support<br />
               For appointment-related queries, contact:<br />
               <strong>gangaprasadurekar0@gmail.com</strong><br />
               (you may reply directly to this email)
@@ -71,13 +71,18 @@ export async function POST(request: Request) {
     const { data, error } = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: [userEmail],
-      subject: "Appointment Confirmation - DentWise",
+      subject: "Appointment Confirmation - DentCare",
       html: html,
     });
 
     if (error) {
       console.error("Resend error:", error);
-      return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+      console.error("Failed to send to:", userEmail);
+      return NextResponse.json({ 
+        error: "Failed to send email", 
+        details: error.message,
+        recipient: userEmail 
+      }, { status: 500 });
     }
 
     return NextResponse.json(
