@@ -4,11 +4,11 @@ import {
   Head,
   Heading,
   Html,
-  Img,
-  Link,
   Preview,
   Section,
   Text,
+  Img,
+  Link,
 } from "@react-email/components";
 
 interface AppointmentConfirmationEmailProps {
@@ -20,7 +20,7 @@ interface AppointmentConfirmationEmailProps {
   price: string;
 }
 
-function AppointmentConfirmationEmail({
+export default function AppointmentConfirmationEmail({
   doctorName,
   appointmentDate,
   appointmentTime,
@@ -28,180 +28,136 @@ function AppointmentConfirmationEmail({
   duration,
   price,
 }: AppointmentConfirmationEmailProps) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+
   return (
     <Html>
       <Head />
-      <Preview>Your dental appointment has been confirmed</Preview>
+
+      {/* Safe preview text (1 emoji allowed) */}
+      <Preview>Your DentCare appointment is confirmed 🦷</Preview>
+
       <Body style={main}>
         <Container style={container}>
+          
+          {/* Logo (served from your own domain, safe) */}
           <Section style={logoContainer}>
             <Img
-              src="https://i.ibb.co.com/tRy6cC2/logo.png"
-              width="50"
-              height="50"
+              src={`${appUrl}/logo.png`}
+              width="48"
+              height="48"
               alt="DentCare"
               style={logo}
             />
-            <Text style={logoText}>DentCare</Text>
           </Section>
 
-          <Heading style={h1}>Appointment Confirmed! 🦷</Heading>
-
-          <Text style={text}>Hi there,</Text>
+          <Heading style={h1}>DentCare Appointment Confirmation</Heading>
 
           <Text style={text}>
-            Your dental appointment has been successfully booked. Here are the details:
+            Your appointment has been successfully scheduled. Here are the details:
           </Text>
 
-          <Section style={appointmentDetails}>
-            <Text style={detailLabel}>Doctor</Text>
-            <Text style={detailValue}>{doctorName}</Text>
-
-            <Text style={detailLabel}>Appointment Type</Text>
-            <Text style={detailValue}>{appointmentType}</Text>
-
-            <Text style={detailLabel}>Date</Text>
-            <Text style={detailValue}>{appointmentDate}</Text>
-
-            <Text style={detailLabel}>Time</Text>
-            <Text style={detailValue}>{appointmentTime}</Text>
-
-            <Text style={detailLabel}>Duration</Text>
-            <Text style={detailValue}>{duration}</Text>
-
-            <Text style={detailLabel}>Cost</Text>
-            <Text style={detailValue}>{price}</Text>
-
-            <Text style={detailLabel}>Location</Text>
-            <Text style={detailValue}>Dental Center</Text>
+          <Section style={detailsBox}>
+            <Text><b>Doctor:</b> {doctorName}</Text>
+            <Text><b>Appointment Type:</b> {appointmentType}</Text>
+            <Text><b>Date:</b> {appointmentDate}</Text>
+            <Text><b>Time:</b> {appointmentTime}</Text>
+            <Text><b>Duration:</b> {duration}</Text>
+            <Text><b>Consultation Fee:</b> {price}</Text>
           </Section>
 
           <Text style={text}>
-            Please arrive 15 minutes early for your appointment. If you need to reschedule or
-            cancel, please contact us at least 24 hours in advance.
+            Please arrive 10–15 minutes before your appointment time.
+            If you need to reschedule, you may reply directly to this email.
           </Text>
 
+          {/* ONE safe button — no tracking params */}
           <Section style={buttonContainer}>
-            <Link style={button} href={process.env.NEXT_PUBLIC_APP_URL + "/appointments"}>
-              View My Appointments
+            <Link
+              href={`${appUrl}/appointments`}
+              style={button}
+            >
+              View My Appointment
             </Link>
           </Section>
 
           <Text style={footer}>
-            Best regards,
-            <br />
-            The DentCare Team
+            DentCare Support<br />
+            For appointment-related queries, contact:<br />
+            <b>gangaprasadurekar0@gmail.com</b><br />
+            (you may reply directly to this email)
           </Text>
 
-          <Text style={footerText}>
-            If you have any questions, please contact us at support@DentCare.com
-          </Text>
         </Container>
       </Body>
     </Html>
   );
 }
 
-export default AppointmentConfirmationEmail;
+/* ---------------- Styles (deliverability-safe) ---------------- */
 
-// 🤡🤡🤡🤡🤡 styles that were generated using AI 🤡🤡🤡🤡🤡
 const main = {
   backgroundColor: "#ffffff",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+  fontFamily: "Arial, Helvetica, sans-serif",
 };
 
 const container = {
   margin: "0 auto",
-  padding: "20px 0 48px",
+  padding: "24px 0 48px",
   maxWidth: "560px",
 };
 
 const logoContainer = {
   textAlign: "center" as const,
-  marginBottom: "32px",
+  marginBottom: "12px",
 };
 
 const logo = {
   borderRadius: "8px",
-  display: "inline",
-  verticalAlign: "middle",
-};
-
-const logoText = {
-  fontSize: "20px",
-  fontWeight: "bold",
-  color: "#2563eb",
-  margin: "0",
-  display: "inline",
-  marginLeft: "12px",
 };
 
 const h1 = {
-  color: "#1f2937",
-  fontSize: "24px",
-  fontWeight: "bold",
+  color: "#111827",
+  fontSize: "22px",
+  fontWeight: 700,
   textAlign: "center" as const,
-  margin: "30px 0",
+  marginTop: "4px",
+  marginBottom: "16px",
 };
 
 const text = {
   color: "#374151",
-  fontSize: "16px",
-  lineHeight: "26px",
-  margin: "16px 0",
+  fontSize: "15px",
+  lineHeight: "24px",
+  margin: "10px 0",
 };
 
-const appointmentDetails = {
-  backgroundColor: "#f9fafb",
-  border: "1px solid #e5e7eb",
+const detailsBox = {
+  backgroundColor: "#f3f4f6",
   borderRadius: "8px",
-  padding: "24px",
-  margin: "24px 0",
-};
-
-const detailLabel = {
-  color: "#6b7280",
-  fontSize: "14px",
-  fontWeight: "500",
-  margin: "8px 0 4px 0",
-};
-
-const detailValue = {
-  color: "#1f2937",
-  fontSize: "16px",
-  fontWeight: "600",
-  margin: "0 0 16px 0",
+  padding: "16px",
+  marginTop: "12px",
 };
 
 const buttonContainer = {
   textAlign: "center" as const,
-  margin: "32px 0",
+  marginTop: "20px",
 };
 
 const button = {
   backgroundColor: "#2563eb",
-  borderRadius: "6px",
   color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "600",
+  padding: "12px 22px",
+  borderRadius: "6px",
   textDecoration: "none",
-  textAlign: "center" as const,
+  fontSize: "15px",
+  fontWeight: 600,
   display: "inline-block",
-  padding: "12px 24px",
 };
 
 const footer = {
-  color: "#374151",
-  fontSize: "16px",
-  lineHeight: "26px",
-  margin: "32px 0 16px 0",
-};
-
-const footerText = {
   color: "#6b7280",
-  fontSize: "14px",
-  lineHeight: "24px",
-  margin: "16px 0 0 0",
+  fontSize: "13px",
+  marginTop: "28px",
   textAlign: "center" as const,
 };
