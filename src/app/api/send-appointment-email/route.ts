@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
 import resend from "@/lib/resend";
-import { smtpConfigured, sendViaSmtp } from "@/lib/smtp";
 
 export async function POST(request: Request) {
-  // Which providers are available — allow SMTP fallback when Resend is not configured or blocks delivery
-  const resendEnabled = !!process.env.RESEND_API_KEY;
-  const smtpEnabled = smtpConfigured();
-
-  // default from: prefer RESEND_FROM, otherwise SMTP_FROM, otherwise a safe default
-  const fromEmail = process.env.RESEND_FROM || process.env.SMTP_FROM || "onboarding@resend.dev";
-
-  console.log("Email providers status", { resendEnabled, smtpEnabled, from: fromEmail });
+  // quick guard to help debugging in staging/dev
+  if (!process.env.RESEND_API_KEY) {
+    console.error("Missing RESEND_API_KEY");
+    return NextResponse.json({ error: "Email provider not configured (RESEND_API_KEY missing)" }, { status: 500 });
+  }
 
   try {
     const body = await request.json();
@@ -72,86 +68,35 @@ export async function POST(request: Request) {
     `;
 
     // Log useful debug info when investigating delivery issues
-    console.log("Attempting to send appointment email", { to: userEmail, from: fromEmail, providers: { resend: resendEnabled, smtp: smtpEnabled } });
+    console.log("Attempting to send appointment email", { to: userEmail, from: fromEmail });
 
-    // If Resend is available, try it first; otherwise fall back to SMTP if configured
-    if (resendEnabled) {
-      try {
-        const sendResponse = await resend.emails.send({
-          from: fromEmail,
-          to: userEmail,
-          subject: "Appointment Confirmation - DentCare",
-          html,
-        });
+    try {
+      const sendResponse = await resend.emails.send({
+        from: fromEmail,
+        to: userEmail,
+        subject: "Appointment Confirmation - DentCare",
+        html,
+      });
 
-        console.log("Resend send response:", sendResponse);
+      console.log("Resend send response:", sendResponse);
 
-        return NextResponse.json(
-          { message: "Email sent successfully", emailId: sendResponse?.data?.id || undefined, recipient: userEmail, method: "resend" },
-          { status: 200 }
-        );
-      } catch (err: any) {
-        // Resend SDK throws on HTTP errors — capture full details for debugging
-        console.error("Resend send failed:", {
-          message: err?.message,
-          code: err?.code,
-          response: err?.response?.data || err?.response || err,
-          recipient: userEmail,
-        });
+      return NextResponse.json(
+        { message: "Email sent successfully", emailId: sendResponse?.data?.id || undefined, recipient: userEmail },
+        { status: 200 }
+      );
+    } catch (err: any) {
+      // Resend SDK throws on HTTP errors — capture full details for debugging
+      console.error("Resend send failed:", {
+        message: err?.message,
+        code: err?.code,
+        response: err?.response?.data || err?.response || err,
+        recipient: userEmail,
+      });
 
-        const responseData = err?.response?.data;
+      // Helpful hint for common misconfiguration (test API keys / verified recipients)
+      const hint = "If you're using a test API key or haven't verified your sending domain/sender in Resend, recipient delivery may be restricted. Check your Resend dashboard and ensure you have a production API key and verified sender.";
 
-        // If it's the validation error (blocked for non-verified recipients), try SMTP if available
-        if (responseData?.name === "validation_error") {
-          const validationMessage = responseData?.message || "Validation error from Resend";
-          console.error("Resend validation error", { validationMessage, responseData, recipient: userEmail });
-
-          if (smtpEnabled) {
-            try {
-              const smtpInfo = await sendViaSmtp({ from: fromEmail, to: userEmail, subject: "Appointment Confirmation - DentCare", html });
-              console.log("SMTP fallback success:", smtpInfo);
-              return NextResponse.json({ message: "Email sent via SMTP fallback", method: "smtp", recipient: userEmail, smtpInfo }, { status: 200 });
-            } catch (smtpErr: any) {
-              console.error("SMTP fallback failed:", smtpErr);
-              const hint = "Resend blocked the send and SMTP fallback also failed. Verify Resend domain or check your SMTP credentials.";
-              return NextResponse.json({ error: "Failed to send via Resend and SMTP", resend: validationMessage, smtpError: smtpErr?.message || smtpErr, recipient: userEmail, hint }, { status: 500 });
-            }
-          }
-
-          // No SMTP configured — return the validation error with docs link
-          const hint = "Resend is preventing sending to non-verified recipients. Verify a domain at https://resend.com/domains, then set RESEND_FROM to an email on that domain and use a production API key.";
-          return NextResponse.json({ error: "Resend validation_error", details: validationMessage, recipient: userEmail, hint, docs: "https://resend.com/domains" }, { status: 422 });
-        }
-
-        // For other resend errors, attempt SMTP fallback if configured
-        if (smtpEnabled) {
-          try {
-            const smtpInfo = await sendViaSmtp({ from: fromEmail, to: userEmail, subject: "Appointment Confirmation - DentCare", html });
-            console.log("SMTP fallback success after resend error:", smtpInfo);
-            return NextResponse.json({ message: "Email sent via SMTP fallback", method: "smtp", recipient: userEmail, smtpInfo }, { status: 200 });
-          } catch (smtpErr: any) {
-            console.error("SMTP fallback failed:", smtpErr);
-            const hint = "Resend failed and SMTP fallback also failed. Check Resend dashboard and SMTP credentials.";
-            return NextResponse.json({ error: "Failed to send via Resend and SMTP", resendError: err?.message || err, smtpError: smtpErr?.message || smtpErr, recipient: userEmail, hint }, { status: 500 });
-          }
-        }
-
-        const hint = "If you're using a test API key or haven't verified your sending domain/sender in Resend, recipient delivery may be restricted. Check your Resend dashboard and ensure you have a production API key and verified sender.";
-        return NextResponse.json({ error: "Failed to send email", details: err?.message || err, recipient: userEmail, hint }, { status: 500 });
-      }
-    } else if (smtpEnabled) {
-      // Resend not configured — use SMTP directly
-      try {
-        const smtpInfo = await sendViaSmtp({ from: fromEmail, to: userEmail, subject: "Appointment Confirmation - DentCare", html });
-        console.log("Sent via SMTP (Resend not configured):", smtpInfo);
-        return NextResponse.json({ message: "Email sent via SMTP", method: "smtp", recipient: userEmail, smtpInfo }, { status: 200 });
-      } catch (smtpErr: any) {
-        console.error("SMTP send failed:", smtpErr);
-        return NextResponse.json({ error: "SMTP send failed", details: smtpErr?.message || smtpErr, recipient: userEmail }, { status: 500 });
-      }
-    } else {
-      // No provider available
-      return NextResponse.json({ error: "No email provider configured. Set RESEND_API_KEY or SMTP_* env vars." }, { status: 500 });
+      return NextResponse.json({ error: "Failed to send email", details: err?.message || err, recipient: userEmail, hint }, { status: 500 });
     }
   } catch (error) {
     console.error("Email sending error:", error);

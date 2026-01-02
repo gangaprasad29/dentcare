@@ -77,8 +77,7 @@ function AppointmentsPage() {
               console.error("Failed to send confirmation email", emailJson);
               toast.error("Failed to send confirmation email: " + (emailJson?.error || emailJson?.details || "Unknown"));
             } else {
-              const method = emailJson?.method ? (emailJson.method === "smtp" ? "SMTP" : "Resend") : "Email";
-              toast.success(`Confirmation email sent (${method})`);
+              toast.success("Confirmation email queued");
             }
           } catch (error) {
             console.error("Error sending confirmation email:", error);
