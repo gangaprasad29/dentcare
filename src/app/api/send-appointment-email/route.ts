@@ -53,13 +53,19 @@ console.log("RESEND RESPONSE:", data);
 console.log("RESEND ERROR:", error);
 
 
-    if (error) {
-      console.error("Resend error:", error);
-      return NextResponse.json(
-        { error: "Failed to send email" },
-        { status: 500 }
-      );
-    }
+   if (error) {
+  console.error("Resend error:", error);
+
+  return NextResponse.json(
+    {
+      error: error?.message || "Resend failed",
+      info: error,
+      from: fromEmail,
+    },
+    { status: error?.statusCode || 500 }
+  );
+}
+
 
     return NextResponse.json(
       { message: "Email sent successfully", emailId: data?.id },
