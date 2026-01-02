@@ -35,18 +35,22 @@ export async function POST(request: Request) {
       process.env.EMAIL_FROM || "DentCare <onboarding@resend.dev>";
 
     const { data, error } = await resend.emails.send({
-      from: "DentCare <onboarding@resend.dev>",
-      to: [userEmail],
-      subject: "Appointment Confirmation - DentCare",
-      react: AppointmentConfirmationEmail({
-        doctorName,
-        appointmentDate,
-        appointmentTime,
-        appointmentType,
-        duration,
-        price,
-      }),
-    });
+  from: process.env.EMAIL_FROM || "DentCare <onboarding@resend.dev>",
+  to: [userEmail],
+  subject: "Appointment Confirmation - DentCare",
+  react: AppointmentConfirmationEmail({
+    doctorName,
+    appointmentDate,
+    appointmentTime,
+    appointmentType,
+    duration,
+    price,
+  }),
+});
+
+console.log("RESEND RESPONSE:", data);
+console.log("RESEND ERROR:", error);
+
 
     if (error) {
       console.error("Resend error:", error);
